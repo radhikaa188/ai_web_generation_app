@@ -48,13 +48,11 @@ const PlayGround = () => {
     const params = useSearchParams()
     const router = useRouter()
     const frameId = params.get('frameId')
-
     const [frameDetail, setFrameDetail] = useState<Frame>()
     const [loading, setLoading] = useState(false)
     const [messages, setMessages] = useState<Messages[]>([])
     const [isHydrated, setIsHydrated] = useState(false);
     const [generatedCode, setGeneratedCode] = useState<string>('') // FIX: Properly typed
-
     // FIX: Track if we've processed the initial prompt
     const [initialPromptProcessed, setInitialPromptProcessed] = useState(false)
 
@@ -264,13 +262,14 @@ const PlayGround = () => {
         <div>
             <PlaygroundHeader />
             <div className='flex'>
+                {/* chat section */}
                 <ChatSecton
                     messages={messages}
                     onSend={(input: string) => SendMessage(input)}
                     loading={loading}
                 />
-                {/* FIX: Pass generatedCode to WebsiteDesign if needed */}
-                {/* <WebsiteDesign generatedCode={generatedCode} /> */}
+                {/* Website Design */}
+                <WebsiteDesign generatedCode = {generatedCode}/>
             </div>
         </div>
     )
