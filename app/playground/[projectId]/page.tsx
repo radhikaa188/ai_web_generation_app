@@ -48,13 +48,13 @@ const PlayGround = () => {
     const params = useSearchParams()
     const router = useRouter()
     const frameId = params.get('frameId')
-    
+
     const [frameDetail, setFrameDetail] = useState<Frame>()
     const [loading, setLoading] = useState(false)
     const [messages, setMessages] = useState<Messages[]>([])
     const [isHydrated, setIsHydrated] = useState(false);
     const [generatedCode, setGeneratedCode] = useState<string>('') // FIX: Properly typed
-    
+
     // FIX: Track if we've processed the initial prompt
     const [initialPromptProcessed, setInitialPromptProcessed] = useState(false)
 
@@ -71,12 +71,12 @@ const PlayGround = () => {
             const savedPrompt = sessionStorage.getItem('initialPrompt')
             if (savedPrompt) {
                 console.log('Found initial prompt in sessionStorage:', savedPrompt)
-                
+
                 // Check if this prompt is already in messages
-                const alreadyExists = messages.some(msg => 
+                const alreadyExists = messages.some(msg =>
                     msg.role === 'user' && msg.content === savedPrompt
                 )
-                
+
                 if (!alreadyExists && messages.length === 0) {
                     // Add user message
                     const userMessage: Messages = {
@@ -84,11 +84,11 @@ const PlayGround = () => {
                         content: savedPrompt
                     }
                     setMessages([userMessage])
-                    
+
                     // Send to AI
                     SendMessage(savedPrompt)
                 }
-                
+
                 // Clear storage
                 sessionStorage.removeItem('initialPrompt')
                 setInitialPromptProcessed(true)
@@ -100,12 +100,12 @@ const PlayGround = () => {
         try {
             const result = await axios.get('/api/frames?frameId=' + frameId + '&projectId=' + projectId);
             setFrameDetail(result.data);
-            
-            if (result.data?.chatMessages && Array.isArray(result.data.chatMessages)) {
-                setMessages(result.data.chatMessages);
-                console.log('Loaded messages from API:', result.data.chatMessages.length)
+
+            if (result.data?.chatMessage && Array.isArray(result.data.chatMessage)) {
+                setMessages(result.data.chatMessage);
+                console.log('Loaded messages from API:', result.data.chatMessage.length)
             }
-            
+
             setIsHydrated(true);
         } catch (error) {
             console.error('Error loading frame details:', error);
@@ -133,9 +133,9 @@ const PlayGround = () => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    messages: [{ 
-                        role: 'user', 
-                        content: Prompt?.replace('{userInput}', userInput) 
+                    messages: [{
+                        role: 'user',
+                        content: Prompt?.replace('{userInput}', userInput)
                     }]
                 })
             });
@@ -176,11 +176,11 @@ const PlayGround = () => {
                 console.log('====== GENERATED CODE ======')
                 console.log(codeBuffer.trim())
                 console.log('====== END OF CODE ======')
-                
+
                 // Also log to see the structure
                 console.log('Code length:', codeBuffer.trim().length)
                 console.log('First 500 chars:', codeBuffer.trim().substring(0, 500))
-                
+
                 setGeneratedCode(codeBuffer.trim());
             }
 
@@ -200,9 +200,9 @@ const PlayGround = () => {
 
         } catch (error) {
             console.error('Error sending message:', error);
-            setMessages(prev => [...prev, { 
-                role: 'assistant', 
-                content: 'Sorry, there was an error processing your request.' 
+            setMessages(prev => [...prev, {
+                role: 'assistant',
+                content: 'Sorry, there was an error processing your request.'
             }]);
         } finally {
             setLoading(false);
@@ -210,22 +210,39 @@ const PlayGround = () => {
     };
 
     // Save messages
+    // NEW - saves only after AI responds
     useEffect(() => {
+        // Don't save during initial load or empty messages
         if (!isHydrated || messages.length === 0) return;
-        
-        const timer = setTimeout(() => {
-            SaveMessages();
-        }, 1000);
-        
-        return () => clearTimeout(timer);
-    }, [messages, isHydrated]);
+
+        // Get the last message
+        const lastMessage = messages[messages.length - 1];
+
+        // Only save when the LAST message is from AI (assistant)
+        // This ensures we save the complete conversation
+        if (lastMessage.role === 'assistant') {
+            console.log('💾 Saving complete conversation (AI responded)');
+
+            const timer = setTimeout(() => {
+                SaveMessages();
+            }, 500);
+
+            return () => clearTimeout(timer);
+        }
+    }, [messages, isHydrated, loading]);
 
     const SaveMessages = async () => {
         try {
+
+            console.log('🔄 Attempting to save messages:', {
+                frameId: frameId,
+                type: typeof frameId,
+                messagesCount: messages.length
+            });
+
             const result = await axios.put('/api/convo', {
                 messages,
-                frameId: frameId ? Number(frameId) : null,
-                generatedCode: generatedCode // FIX: Save the generated code too
+                frameId: frameId
             });
             console.log('Saved messages:', result.data);
         } catch (e) {
@@ -247,9 +264,9 @@ const PlayGround = () => {
         <div>
             <PlaygroundHeader />
             <div className='flex'>
-                <ChatSecton 
-                    messages={messages} 
-                    onSend={(input: string) => SendMessage(input)} 
+                <ChatSecton
+                    messages={messages}
+                    onSend={(input: string) => SendMessage(input)}
                     loading={loading}
                 />
                 {/* FIX: Pass generatedCode to WebsiteDesign if needed */}
