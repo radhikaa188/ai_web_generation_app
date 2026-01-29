@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import WebPageTools from './WebPageTools';
 
 type Props = {
@@ -7,7 +7,7 @@ type Props = {
 
 function WebsiteDesign({ generatedCode }: Props) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-
+  const [selectedScreenSize, setSelectedScreenSize] = useState('desktop')
   // Initialize iframe shell once
   useEffect(() => {
     if (!iframeRef.current) return;
@@ -71,13 +71,17 @@ function WebsiteDesign({ generatedCode }: Props) {
   }, [generatedCode]);
 
   return (
-    <div className='p-5 w-full'>
+    
+    <div className='p-5 w-full flex items-center flex-col max-h-screen'>
     <iframe
       ref={iframeRef}
-      className="w-full h-[700px] border rounded"
+      className={`${selectedScreenSize=='desktop'?'w-full h-[500px] border rounded':'w-[375px] h-[500px] border rounded'}`}
       sandbox="allow-scripts allow-same-origin"
     />
-    <WebPageTools/>
+    <WebPageTools selectedScreenSize = {selectedScreenSize}
+    setSelectedScreenSize={(v:string)=>setSelectedScreenSize(v)}
+    generatedCode = {generatedCode}
+    />
     </div>
   );
 }
