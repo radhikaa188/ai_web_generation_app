@@ -5,6 +5,7 @@ import ChatSecton from '../_components/ChatSecton'
 import WebsiteDesign from '../_components/WebsiteDesign'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import axios from 'axios'
+import { toast } from 'sonner'
 
 export type Frame = {
     projectId: string,
@@ -98,7 +99,12 @@ const PlayGround = () => {
         try {
             const result = await axios.get('/api/frames?frameId=' + frameId + '&projectId=' + projectId);
             setFrameDetail(result.data);
-
+           
+            const designCode=result.data?.designCode
+            const index=designCode.indexOf("```html")+7
+            const formattedCode=designCode.slice(index)
+            setGeneratedCode(formattedCode)
+            
             if (result.data?.chatMessage && Array.isArray(result.data.chatMessage)) {
                 setMessages(result.data.chatMessage);
                 console.log('Loaded messages from API:', result.data.chatMessage.length)
@@ -175,12 +181,10 @@ const PlayGround = () => {
                 console.log(codeBuffer.trim())
                 console.log('====== END OF CODE ======')
 
-                // Also log to see the structure
-                console.log('Code length:', codeBuffer.trim().length)
-                console.log('First 500 chars:', codeBuffer.trim().substring(0, 500))
-
                 setGeneratedCode(codeBuffer.trim());
+                await SaveGeneratedCode(codeBuffer.trim())
             }
+            
 
             const assistantMessage: Messages = {
                 role: 'assistant',
@@ -189,13 +193,6 @@ const PlayGround = () => {
 
             setMessages(prev => [...prev, assistantMessage]);
 
-            // FIX: If code was generated, you might want to display it
-            if (isCode) {
-                console.log('HTML Code generated successfully')
-                // Here you might want to pass the code to WebsiteDesign component
-                // Or update frameDetail with the generated code
-            }
-
         } catch (error) {
             console.error('Error sending message:', error);
             setMessages(prev => [...prev, {
@@ -203,6 +200,7 @@ const PlayGround = () => {
                 content: 'Sorry, there was an error processing your request.'
             }]);
         } finally {
+            
             setLoading(false);
         }
     };
@@ -248,15 +246,16 @@ const PlayGround = () => {
         }
     };
 
-    // FIX: Log whenever generatedCode changes
-    useEffect(() => {
-        if (generatedCode) {
-            console.log('Generated code updated:', {
-                length: generatedCode.length,
-                preview: generatedCode.substring(0, 200) + '...'
-            })
-        }
-    }, [generatedCode])
+
+
+    const SaveGeneratedCode=async (code:string)=>{
+        const result = await axios.put('/api/frames',{
+            designCode: code,
+            frameId:frameId,
+            projectId:projectId
+        })
+        toast.success('Website is ready')
+    }
 
     return (
         <div>
