@@ -257,21 +257,28 @@ const PlayGround = () => {
         toast.success('Website is ready')
     }
 
-    return (
-        <div>
-            <PlaygroundHeader />
-            <div className='flex'>
-                {/* chat section */}
-                <ChatSecton
-                    messages={messages}
-                    onSend={(input: string) => SendMessage(input)}
-                    loading={loading}
-                />
-                {/* Website Design */}
-                <WebsiteDesign generatedCode = {generatedCode}/>
-            </div>
-        </div>
-    )
+   // page.tsx
+return (
+  <div className="h-screen flex flex-col overflow-hidden">
+    <PlaygroundHeader />
+    
+    <div className="flex flex-1 overflow-hidden">
+      {/* Left: Chat Section */}
+      <div className="w-80 border-r border-gray-200">
+        <ChatSecton
+          messages={messages}
+          onSend={(input: string) => SendMessage(input)}
+          loading={loading}
+        />
+      </div>
+      
+      {/* Right: Website Design (takes remaining space) */}
+      <div className="flex-1 overflow-hidden">
+        <WebsiteDesign generatedCode={generatedCode} />
+      </div>
+    </div>
+  </div>
+);
 }
 
 export default PlayGround

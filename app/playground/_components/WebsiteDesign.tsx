@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import WebPageTools from './WebPageTools';
+import ElementSettings from './ElementSettings';
 
 type Props = {
   generatedCode: string
@@ -8,83 +9,165 @@ type Props = {
 function WebsiteDesign({ generatedCode }: Props) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [selectedScreenSize, setSelectedScreenSize] = useState('desktop')
+  const [selectedElement, setSelectedElement] = useState<HTMLElement | null>()
+
   // Initialize iframe shell once
   useEffect(() => {
     if (!iframeRef.current) return;
 
-    const doc = iframeRef.current.contentDocument;
-    if (!doc) return;
+    const iframe = iframeRef.current;
+    
+    const handleLoad = () => {
+      const doc = iframe.contentDocument;
+      if (!doc) return;
 
-    doc.open();
-    doc.write(`
+      let hoverEl: HTMLElement | null = null;
+      let selectedEl: HTMLElement | null = null;
+
+      const handleMouseOver = (e: MouseEvent) => {
+        if (selectedEl) return;
+        const target = e.target as HTMLElement;
+        if (hoverEl && hoverEl !== target) {
+          hoverEl.style.outline = "";
+        }
+        hoverEl = target;
+        hoverEl.style.outline = "2px dotted blue";
+      };
+
+      const handleMouseOut = (e: MouseEvent) => {
+        if (selectedEl) return;
+        if (hoverEl) {
+          hoverEl.style.outline = "";
+          hoverEl = null;
+        }
+      };
+
+      const handleClick = (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const target = e.target as HTMLElement;
+
+        if (selectedEl && selectedEl !== target) {
+          selectedEl.style.outline = "";
+          selectedEl.removeAttribute("contenteditable");
+        }
+        selectedEl = target;
+        selectedEl.style.outline = "2px solid black";
+        selectedEl.setAttribute("contenteditable", "true");
+        selectedEl.focus();
+        console.log("Selected element:", selectedEl);
+        setSelectedElement(selectedEl)
+      };
+
+      const handleBlur = () => {
+        if (selectedEl) {
+          console.log("Final edited element:", selectedEl.outerHTML);
+        }
+      };
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Escape" && selectedEl) {
+          selectedEl.style.outline = "";
+          selectedEl.removeAttribute("contenteditable");
+          selectedEl.removeEventListener("blur", handleBlur);
+          selectedEl = null;
+        }
+      };
+
+      doc.body?.addEventListener("mouseover", handleMouseOver);
+      doc.body?.addEventListener("mouseout", handleMouseOut);
+      doc.body?.addEventListener("click", handleClick);
+      doc.addEventListener("keydown", handleKeyDown);
+    };
+
+    // Set up load listener
+    iframe.addEventListener("load", handleLoad);
+
+    // Write the HTML
+    const doc = iframe.contentDocument;
+    if (doc) {
+      doc.open();
+      doc.write(`
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="AI Website Builder Modern TailwindCSS + Flowbite Template">
-    <title>AI Website Builder</title>
-    <!-- Tailwind CSS -->
+    <title>Preview</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Flowbite CSS & JS -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
-    <!-- Font Awesome / Lucide -->
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- AOS -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
-    <!-- GSAP -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <!-- Lottie -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.11.2/lottie.min.js"></script>
-    <!-- Swiper -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
-    <!-- Tippy.js -->
-    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css" />
-    <script src="https://unpkg.com/@popperjs/core@2"></script>
-    <script src="https://unpkg.com/tippy.js@6"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; overflow: auto; }
+      body { padding: 20px; background: #f9fafb; }
+    </style>
 </head>
 <body id="root"></body>
 </html>
 `);
-    doc.close();
+      doc.close();
+    }
+
+    // Cleanup
+    return () => {
+      iframe.removeEventListener("load", handleLoad);
+    };
   }, []);
 
   // Update body only when code changes
   useEffect(() => {
-    if (!iframeRef.current) return;
+    if (!iframeRef.current || !generatedCode) return;
 
     const doc = iframeRef.current.contentDocument;
     if (doc) {
       const root = doc.getElementById("root");
       if (root) {
-        root.innerHTML = generatedCode
+        // Simple clean without complex replacements
+        const cleanCode = generatedCode
+          .replace(/min-h-screen/g, '')
+          .replace(/h-screen/g, '')
           .replaceAll("<html>", "")
           .replaceAll("</html>", "")
-          .replace("<body>", "") ?? "";
+          .replace("<body>", "")
+          .replace("</body>", "");
+        
+        root.innerHTML = cleanCode;
       }
     }
   }, [generatedCode]);
 
   return (
-    
-    <div className='p-5 w-full flex items-center flex-col max-h-screen'>
-    <iframe
-      ref={iframeRef}
-      className={`${selectedScreenSize=='desktop'?'w-full h-[500px] border rounded':'w-[375px] h-[500px] border rounded'}`}
-      sandbox="allow-scripts allow-same-origin"
-    />
-    <WebPageTools selectedScreenSize = {selectedScreenSize}
-    setSelectedScreenSize={(v:string)=>setSelectedScreenSize(v)}
-    generatedCode = {generatedCode}
-    />
+    <div className='h-full flex gap-2 p-4 bg-gray-50'> {/* Added: h-full and bg-gray-50 */}
+      {/* Left: Preview Section */}
+      <div className='flex-1 flex flex-col min-h-0'> {/* Added: min-h-0 */}
+        {/* Iframe Container */}
+        <div className='flex-1 border rounded-lg overflow-hidden bg-white min-h-0'> {/* Added: min-h-0 */}
+          <iframe
+            ref={iframeRef}
+            className="w-full h-full border-none"
+            sandbox="allow-scripts allow-same-origin"
+            title="Website Preview"
+          />
+        </div>
+        
+        {/* Tools */}
+        <div className='mt-4'>
+          <WebPageTools 
+            selectedScreenSize={selectedScreenSize}
+            setSelectedScreenSize={(v: string) => setSelectedScreenSize(v)}
+            generatedCode={generatedCode}
+          />
+        </div>
+      </div>
+      
+      {/* Right: Settings Section */}
+      <div className='w-96'>
+        <ElementSettings 
+          selectedElement={selectedElement!} 
+          clearSelection={() => setSelectedElement(null)}
+        />
+      </div>
     </div>
   );
 }
 
-export default WebsiteDesign; 
-
+export default WebsiteDesign;
