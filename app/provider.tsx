@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import {useUser} from '@clerk/nextjs'
 import { UserDetailContext } from '@/context/UserDetailContext'
+import { OnSaveContext } from '@/context/OnSaveContext'
 function provider({
   children,
 }: Readonly<{
@@ -10,6 +11,7 @@ function provider({
 }>){
   const {user} = useUser();
   const [userDetail, setUserDetail] = useState<any>();
+  const [onSaveData, setOnSaveData] = useState<any>(null)
   useEffect(()=>{
     if (user) {
     CreateNewUser();
@@ -25,7 +27,9 @@ function provider({
     <div>
       {/* share the  alue throughout the app thriugh context */}
       <UserDetailContext.Provider value={{userDetail, setUserDetail}}>
-      {children}
+        <OnSaveContext.Provider value={{onSaveData, setOnSaveData}}>
+           {children}
+        </OnSaveContext.Provider>
       </UserDetailContext.Provider>
       </div>
   )

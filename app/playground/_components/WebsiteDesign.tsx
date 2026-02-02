@@ -1,6 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useContext, useEffect, useEffectEvent, useRef, useState } from 'react'
 import WebPageTools from './WebPageTools';
 import ElementSettings from './ElementSettings';
+import ImageSettingSection from './ImageSettings';
+import { OnSaveContext } from '@/context/OnSaveContext';
+import axios from 'axios';
+import { toast } from 'sonner';
+import { useParams, useSearchParams } from 'next/navigation';
 
 type Props = {
   generatedCode: string
@@ -10,7 +15,10 @@ function WebsiteDesign({ generatedCode }: Props) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [selectedScreenSize, setSelectedScreenSize] = useState('desktop')
   const [selectedElement, setSelectedElement] = useState<HTMLElement | null>()
-
+  const {onSaveData, setOnSaveData} = useContext(OnSaveContext)
+  const { projectId } = useParams()
+  const params = useSearchParams()
+  const frameId = params.get('frameId')
   // Initialize iframe shell once
   useEffect(() => {
     if (!iframeRef.current) return;
@@ -135,6 +143,40 @@ function WebsiteDesign({ generatedCode }: Props) {
     }
   }, [generatedCode]);
 
+  useEffect(()=>{
+    onSaveData && onSaveCode()
+  },[onSaveData])
+
+  const onSaveCode=async()=>{
+    if(iframeRef.current){
+      try{
+        const iframeDoc = iframeRef.current.contentDocument
+        || iframeRef.current.contentWindow?.document;
+        if(iframeDoc){
+          const cloneDoc = iframeDoc.documentElement.cloneNode(true) as HTMLElement
+          // Remove outlines
+          const AllEls = cloneDoc.querySelectorAll<HTMLElement>("*")
+          AllEls.forEach((el)=>{
+            el.style.outline = '';
+            el.style.cursor = ''
+          })
+          const html = cloneDoc.outerHTML
+          console.log('HTML to save', html)
+
+          
+                  const result = await axios.put('/api/frames',{
+                      designCode: html,
+                      frameId:frameId,
+                      projectId:projectId
+                  })
+                  toast.success('SAVED!')
+              
+        }
+      }catch(err){
+        console.log(err)
+      }
+    }
+  }
   return (
     <div className='h-full flex gap-2 p-4 bg-gray-50'> {/* Added: h-full and bg-gray-50 */}
       {/* Left: Preview Section */}
@@ -161,10 +203,15 @@ function WebsiteDesign({ generatedCode }: Props) {
       
       {/* Right: Settings Section */}
       <div className='w-96'>
-        <ElementSettings 
+        {/* <ElementSettings 
           selectedElement={selectedElement!} 
           clearSelection={() => setSelectedElement(null)}
-        />
+        /> */}
+        {selectedElement?.tagName == 'IMG'?
+        // @ts-ignore
+        <ImageSettingSection selectedEl={selectedElement}/>
+      :selectedElement?<ElementSettings selectedElement={selectedElement!} 
+          clearSelection={() => setSelectedElement(null)}/>:null}
       </div>
     </div>
   );
