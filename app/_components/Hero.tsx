@@ -1,15 +1,17 @@
 'use client'
 import { Button } from '@/components/ui/button'
 import { ArrowUp, Flashlight, HomeIcon, ImagePlus, Key, LayoutDashboard, Loader2Icon } from 'lucide-react'
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import {
   SignInButton,
+  useAuth,
   useUser
 } from '@clerk/nextjs'
 import axios from 'axios'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { v4 as uuidv4 } from 'uuid';
+import { UserDetailContext } from '@/context/UserDetailContext'
 
 const suggestion =[
     {
@@ -37,7 +39,8 @@ const Hero = () => {
     const router= useRouter()
     const {user}= useUser();
     const [Loading, setLoading]= useState(false)
-
+    const {has} = useAuth()
+    const {userDetail, setUserDetail} = useContext(UserDetailContext)
     const handleSuggestionClick = (promptText: string) => {
     // FIX: Only fill the textarea
     setUserInput(promptText);
@@ -47,8 +50,12 @@ const Hero = () => {
     
     console.log('Prompt set in textarea:', promptText);
 }
-
+        const hasUnlimited = has && has({plan: 'unlimited'})
     const createNewProject =async()=>{
+        if(!hasUnlimited && userDetail?.credits!<=0){
+            toast.error('You have no credits left. Please upgrade your plan.')
+            return
+        }
         setLoading(true)
         const projectId= uuidv4()
         const frameId = generateRandomFrameNo()
@@ -63,12 +70,17 @@ const Hero = () => {
             const result = await axios.post('/api/projects', {
                 projectId: projectId,
                 frameId: frameId,
-                messages:messages
+                messages:messages,
+                credits: userDetail?.credits
             })
             console.log(result.data)
             toast.success('project created')
             //Naviagte to playground
             router.push(`/playground/${projectId}?frameId=${frameId}`)
+            setUserDetail((prev:any)=>({
+                ...prev,
+                credits: prev?.credits! -1
+            }))
             setLoading(false)
         }catch(e){
             toast.error('Internal server error')
