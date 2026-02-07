@@ -66,19 +66,7 @@ const WebPageTools = ({selectedScreenSize, setSelectedScreenSize, generatedCode}
     }
     return (
         <div className='p-2 shadow rounded-xl w-full flex items-center justify-between'>
-            <div className='flex gap-2'>
-                <Button variant={'ghost'} 
-                className={`${selectedScreenSize=='desktop' ? 'border border-primary': null}`}
-                onClick={()=>{
-                    setSelectedScreenSize('desktop')
-                }} ><Monitor /></Button>
-                <Button variant={'ghost'}
-                className={`${selectedScreenSize=='mobile' ? 'border border-primary': null}`}
-                onClick={()=>{
-                    setSelectedScreenSize('mobile')
-                }}><TabletSmartphone /></Button>
-            </div>
-            <div>
+            <div className="flex items-center gap-4">
                 <Button variant={'outline'} onClick={()=> viewInNewtab()}>View <SquareArrowOutUpRight/></Button>
                 <ViewCodeBlock code={finalCode}>
                     <Button>Code <Code2Icon/></Button>

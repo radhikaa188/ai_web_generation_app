@@ -18,6 +18,8 @@ type Props = {
 }
 const ElementSettings = ({ selectedElement, clearSelection }: Props) => {
 
+  if (!selectedElement) return null;
+
   const applyStyle = (property: string, value: string) => {
     if (selectedElement) {
       selectedElement.style[property as any] = value

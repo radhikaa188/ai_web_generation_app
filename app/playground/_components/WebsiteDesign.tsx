@@ -8,10 +8,11 @@ import { toast } from 'sonner';
 import { useParams, useSearchParams } from 'next/navigation';
 
 type Props = {
-  generatedCode: string
+  generatedCode: string,
+  className?: string
 }
 
-function WebsiteDesign({ generatedCode }: Props) {
+function WebsiteDesign({ generatedCode, className }: Props) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [selectedScreenSize, setSelectedScreenSize] = useState('desktop')
   const [selectedElement, setSelectedElement] = useState<HTMLElement | null>()
@@ -178,6 +179,10 @@ function WebsiteDesign({ generatedCode }: Props) {
     }
   }
   return (
+    <div className={`h-full w-full overflow-auto bg-gray-50 ${className || ""}`}>
+  {/* Your website preview goes here */}
+
+
     <div className='h-full flex gap-2 p-4 bg-gray-50'> {/* Added: h-full and bg-gray-50 */}
       {/* Left: Preview Section */}
       <div className='flex-1 flex flex-col min-h-0'> {/* Added: min-h-0 */}
@@ -213,6 +218,7 @@ function WebsiteDesign({ generatedCode }: Props) {
       :selectedElement?<ElementSettings selectedElement={selectedElement!} 
           clearSelection={() => setSelectedElement(null)}/>:null}
       </div>
+    </div>
     </div>
   );
 }

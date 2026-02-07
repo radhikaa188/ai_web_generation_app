@@ -1,7 +1,7 @@
 'use client'
 import { Button } from '@/components/ui/button'
 import { ArrowUp, Flashlight, HomeIcon, ImagePlus, Key, LayoutDashboard, Loader2Icon } from 'lucide-react'
-import React, { useContext, useState } from 'react'
+import React, { useContext, useRef, useState } from 'react'
 import {
   SignInButton,
   useAuth,
@@ -89,6 +89,20 @@ const Hero = () => {
         }
     }
 
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    // Trigger click on hidden input
+  const handleClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Handle selected files
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      console.log("Selected files:", files);
+      // You can handle uploading here
+    }
+  };
   return (
   <div className='flex flex-col items-center h-[80vh] justify-center'>
         {/* header & discription */}
@@ -101,8 +115,20 @@ const Hero = () => {
             <textarea placeholder='Describe your page design' className='w-full h-24 focus:outline-none focus:ring-0 resize-none' value={userInput}
             onChange={(e)=>setUserInput(e.target.value)}/>
             <div className='flex justify-between'>
-                <Button variant={'ghost'}> <ImagePlus/></Button>
-                
+                <div>
+                <Button variant="ghost" onClick={handleClick}>
+        <ImagePlus />
+      </Button>
+
+                 {/* Hidden file input */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        style={{ display: "none" }}
+        onChange={handleFileChange}
+        accept="image/*" // optional: only allow images
+      />
+      </div>
                 <Button disabled={!userInput || Loading} variant={'ghost'} onClick={createNewProject}> {Loading? <Loader2Icon className='animate-spin'/>:<ArrowUp/>}</Button>
 
             </div>

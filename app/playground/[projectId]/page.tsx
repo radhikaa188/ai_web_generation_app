@@ -264,7 +264,7 @@ return (
     
     <div className="flex flex-1 overflow-hidden">
       {/* Left: Chat Section */}
-      <div className="w-80 border-r border-gray-200">
+      <div className="w-80 border-r border-gray-200 h-full">
         <ChatSecton
           messages={messages}
           onSend={(input: string) => SendMessage(input)}
@@ -273,9 +273,11 @@ return (
       </div>
       
       {/* Right: Website Design (takes remaining space) */}
-      <div className="flex-1 overflow-hidden">
-        <WebsiteDesign generatedCode={generatedCode} />
-      </div>
+      
+      <div className="flex-1 h-full flex flex-col overflow-hidden">
+  <WebsiteDesign generatedCode={generatedCode} className="flex-1 h-full" />
+</div>
+
     </div>
   </div>
 );

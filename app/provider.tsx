@@ -12,11 +12,13 @@ function provider({
   const {user} = useUser();
   const [userDetail, setUserDetail] = useState<any>();
   const [onSaveData, setOnSaveData] = useState<any>(null)
+  // triggers whenever the user changes
   useEffect(()=>{
     if (user) {
     CreateNewUser();
   }
   }, [user])
+  // give backend call to create user, there the checking part is done if user is alr created or new
   const CreateNewUser = async() =>{
     const result=await axios.post('/api/users',{
     })

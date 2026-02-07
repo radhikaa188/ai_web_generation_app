@@ -80,7 +80,7 @@ const ChatSection = ({ messages, onSend, loading = false }: Props) => {
       <div className='p-3 border-t flex items-center gap-2 shrink-0 bg-white'> {/* Added: bg-white */}
         <textarea 
           value={input}
-          placeholder='Describe your website design idea...'
+          placeholder='Describe your idea...'
           className='flex-1 resize-none border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary min-h-[44px] max-h-[120px]'
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyPress}
